@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "name": "Food",
+        "icon": "🍖"
+    },
+    {
+        "id": 2,
+        "name": "Toys",
+        "icon": "🧸"
+    },
+    {
+        "id": 3,
+        "name": "Grooming",
+        "icon": "✂️"
+    },
+    {
+        "id": 4,
+        "name": "Healthcare",
+        "icon": "💊"
+    },
+    {
+        "id": 5,
+        "name": "Beds",
+        "icon": "🛌"
+    }
+]
