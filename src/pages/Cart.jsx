@@ -57,7 +57,7 @@ export default function Cart() {
         <div className="container py-5 fade-in-element">
             <h2 className="fw-black mb-4">Your Shopping Basket</h2>
 
-            ={cartItems.length === 0 ? (
+            {cartItems.length === 0 ? (
                 <div className="card border-0 shadow-sm rounded-4 p-5 text-center">
                     <div className="fs-1 mb-2">🛒</div>
                     <h4 className="fw-bold text-muted">Your basket is empty</h4>

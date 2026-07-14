@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom'; // 1. Import useParams hook
 import ProductCard from '../components/common/ProductCard';
 import QuickViewModal from '../components/product/QuickViewModal';
-import FilterSidebar from '../components/product/FilterSidebar'; // ✅ Modularized Import
 import Footer from '../components/common/Footer';
 
 export default function ProductListing() {
-    const { categoryName } = useParams();
+    const { categoryName } = useParams(); // 2. Extract our parameter token
     const [products, setProducts] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
     const [search, setSearch] = useState('');
     const [petType, setPetType] = useState('All');
+    // 3. Set standard initial fallbacks to look out for incoming route parameters
     const [category, setCategory] = useState(categoryName || 'All');
     const [sortOrder, setSortOrder] = useState('default');
 
-    // Fetch initial master product inventory records
     useEffect(() => {
         axios.get('/data/products.json').then(res => {
             setProducts(res.data);
@@ -25,22 +24,18 @@ export default function ProductListing() {
         }).catch(err => console.error(err));
     }, []);
 
-    // Synchronize category state changes if incoming URL category parameters mutate
+    // 4. Listen for dynamic updates if the user clicks a different link while inside the catalogue
     useEffect(() => {
         if (categoryName) {
             setCategory(categoryName);
         }
     }, [categoryName]);
 
-    // Computation Pipeline: Handles searches, multi-tier filters, and price arrays sorting
     useEffect(() => {
         let result = [...products];
 
         if (search) {
-            result = result.filter(p =>
-                p.name.toLowerCase().includes(search.toLowerCase()) ||
-                p.brand.toLowerCase().includes(search.toLowerCase())
-            );
+            result = result.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase()));
         }
         if (petType !== 'All') {
             result = result.filter(p => p.petType === petType);
@@ -49,29 +44,67 @@ export default function ProductListing() {
             result = result.filter(p => p.category.toLowerCase() === category.toLowerCase());
         }
 
+        // ✅ FIX: Create a separate shallow copy before sorting to completely block the infinite render loop
+        let finalDisplayList = [...result];
+
         if (sortOrder === 'low-high') {
-            result.sort((a, b) => a.discountPrice - b.discountPrice);
+            finalDisplayList.sort((a, b) => Number(a.discountPrice) - Number(b.discountPrice));
         } else if (sortOrder === 'high-low') {
-            result.sort((a, b) => b.discountPrice - a.discountPrice);
+            finalDisplayList.sort((a, b) => Number(b.discountPrice) - Number(a.discountPrice));
         }
 
-        setFiltered(result);
+        setFiltered(finalDisplayList);
     }, [search, petType, category, sortOrder, products]);
 
     return (
         <div className="container py-5 fade-in-element">
             <div className="row g-4">
-                {/* Left Side Column: Filter Interface */}
+                {/* Sidebar */}
                 <div className="col-lg-3">
-                    <FilterSidebar
-                        search={search} setSearch={setSearch}
-                        petType={petType} setPetType={setPetType}
-                        category={category} setCategory={setCategory}
-                        setSortOrder={setSortOrder}
-                    />
+                    <div className="card border-0 shadow-sm rounded-4 p-4 sticky-md-top" style={{ top: '100px', zIndex: '10' }}>
+                        <h5 className="fw-bold mb-4">Inventory Modifiers</h5>
+
+                        <div className="mb-4">
+                            <label className="form-label small fw-bold text-muted text-uppercase">Textual Match Query</label>
+                            <input type="text" className="form-control rounded-pill" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="form-label small fw-bold text-muted text-uppercase">Target Pet Classification</label>
+                            <select className="form-select rounded-pill" value={petType} onChange={(e) => setPetType(e.target.value)}>
+                                <option value="All">All Animals</option>
+                                <option value="Dog">Dogs Only</option>
+                                <option value="Cat">Cats Only</option>
+                                <option value="Bird">Birds Only</option>
+                                <option value="Fish">Fish Only</option>
+                                <option value="Rabbit">Rabbits Only</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="form-label small fw-bold text-muted text-uppercase">Core Functional Line</label>
+                            <select className="form-select rounded-pill" value={category} onChange={(e) => setCategory(e.target.value)}>
+                                <option value="All">All Categories</option>
+                                <option value="Food">Food</option>
+                                <option value="Toys">Toys</option>
+                                <option value="Beds">Beds</option>
+                                <option value="Grooming">Grooming</option>
+                                <option value="Healthcare">Healthcare</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <button
+                                onClick={() => { setSearch(''); setPetType('All'); setCategory('All'); setSortOrder('default'); }}
+                                className="btn btn-outline-danger btn-sm w-100 rounded-pill py-2"
+                            >
+                                Clear Applied Filters
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Side Column: Product Results Grid Matrix */}
+                {/* Product Layout Grid Grid */}
                 <div className="col-lg-9">
                     <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 bg-light p-3 rounded-4">
                         <span className="small text-muted fw-semibold">
@@ -104,7 +137,6 @@ export default function ProductListing() {
                     )}
                 </div>
             </div>
-
             <QuickViewModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
             <Footer />
         </div>
